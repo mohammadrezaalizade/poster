@@ -47,8 +47,8 @@ const AuthPage = () => {
   }, [stage]);
 
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center relative">
-      <div className="bg-p_white-100 w-screen h-screen flex items-center justify-center flex-col">
+    <div className="w-screen h-screen lg:h-[50vh] lg:w-[50vw] lg:transform lg:translate-x-[50%] lg:translate-y-[50%] flex flex-col justify-center items-center relative">
+      <div className="bg-p_white-100 w-full h-full  flex items-center justify-center flex-col">
         {steps.map((step, index) => {
           if (stage > index || stage < index) return null;
           return (
@@ -62,7 +62,7 @@ const AuthPage = () => {
           );
         })}
       </div>
-      <div className="flex justify-between gap-[30px] px-12 py-6 w-full  items-center select-none fixed bottom-0">
+      <div className="fixed flex bottom-0 p-4 justify-between w-full">
         <PrevBtn
           disabled={statusPrevBtn}
           onClick={() => {
