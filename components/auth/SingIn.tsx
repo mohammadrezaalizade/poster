@@ -2,23 +2,36 @@ import React, { useState } from "react";
 import InputAuth from "./UI/InputAuth";
 import Link from "next/link";
 import FormLayout from "./layouts/FormLayout";
+import { useStore } from "zustand";
+import { useAuthStore } from "../../store/global/authStore";
+import { useRouter } from "next/router";
 
 const SingIn = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [keepmeSingIn, setKeepmeSingIn] = useState<boolean>(false);
+  const user = useStore(useAuthStore);
+  const router = useRouter();
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
     if (username && password) {
-      fetch("", {
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/user`, {
         method: "POST",
         headers: {
-          Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, keepmeSingIn }),
-      });
+        body: JSON.stringify({
+          username: username,
+          password: password,
+          keepmeSingIn: keepmeSingIn,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          user.singIn(data);
+          router.replace("/app");
+        });
     } else {
     }
   };

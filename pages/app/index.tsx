@@ -1,9 +1,11 @@
-import type { NextPage } from 'next'
-
+import type { NextPage } from "next";
+import AuthProvider from "../../store/context/AuthProvider";
 const AppPage: NextPage = () => {
   return (
-   <div></div>
-  )
-}
+    <AuthProvider>
+      <div></div>
+    </AuthProvider>
+  );
+};
 
-export default AppPage
+export default AppPage;

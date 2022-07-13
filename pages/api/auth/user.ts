@@ -2,45 +2,48 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 import User from "../../../db/models/user";
 import connectMongo from "../../../db/utils/mongodb";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
-const KEY = process.env.JWT_KEY
+const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 
-
-
-router.get((req, res) => {
-  res.json({
-    users: ["Mohammadreza"],
-  });
-});
-
 router.post(async (req, res) => {
   try {
-    console.log("**____________________________**");
-
-    console.log("CONNECTING TO MONGO");
+    const { username, password, keepmeSingIn } = req.body;
     await connectMongo();
-    console.log("CONNECTED TO MONGO");
+    const user = await User.findOne({ username: username });
+    console.log(user);
+    const payload = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName,
+      createdAt: user.createdAt,
+    };
+    const createUserToken = jwt.sign(payload, KEY, { expiresIn: "7d" });
 
-    console.log("CREATING DOCUMENT");
+    if (password === user.password) {
+      if (keepmeSingIn) {
+        res.setHeader(
+          "Set-Cookie",
+          `token=${createUserToken}; path='/'; Max-Age=604800 ; httpOnly; secure; SameSite=Strict`
+        );
 
-    const newUser = await User.create({
-      username: "momrez",
-      email: "poster@momrez.com",
-      password: "12345678",
-      name: "Mohammadreza",
-    });
-    console.log("CREATED DOCUMENT");
-
-    res.status(200).json(newUser);
-    console.log("**____________________________**");
-  } catch (error) {
-    console.log("**____________________________**");
+        res.status(200).json({
+          token: createUserToken,
+          userInfo: payload,
+        });
+      } else {
+        res.setHeader("Set-Cookie", "token=someValue; Max-Age=0");
+        res.status(200).json({ userInfo: payload, token: createUserToken });
+      }
+    } else {
+      throw new Error("Your password or username is wrong");
+    }
+  } catch (error: any) {
     console.log(error);
-    res.json({ error });
-    console.log("**____________________________**");
+    res.status(401).json({ error: error.message, status: 401 });
   }
 });
 
