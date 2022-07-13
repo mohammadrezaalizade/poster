@@ -1,26 +1,34 @@
 import React, { useEffect, useState } from "react";
 import FormLayout from "./layouts/FormLayout";
 import InputAuth from "./UI/InputAuth";
+import { userToken as userInfo } from "../../atoms/userToken";
+import { useRecoilState } from "recoil";
+import jwt from "jsonwebtoken";
+
+const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
 
 const SingUp = () => {
-  const [newUsername, setNewUsername] = useState("");
+  const [username, setUsername] = useState("");
   const [avaibleUsername, setAvaibleUsername] = useState(true);
   const [email, setEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [password, setPassword] = useState("");
   const [confirmnewPassword, setConfirmnewPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [userToken, setUserToken] = useRecoilState(userInfo);
 
+  
   //check username is exists or not
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (newUsername.length >= 4) {
+      if (username.length >= 4) {
         //ERROR
-        fetch(`${process.env.BASE_URL}/api/user.....`, {
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user.....`, {
           method: "POST",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ newPassword }),
+          body: JSON.stringify({ password }),
         })
           .then((res) => res.json())
           .then((isAvaible) =>
@@ -30,30 +38,42 @@ const SingUp = () => {
     }, 2000);
 
     return clearTimeout(timeout);
-  }, [newUsername]);
+  }, [username]);
 
   const handlesubmit = (e: any) => {
     e.preventDefault();
     if (
-      newUsername &&
-      newUsername.length >= 6 &&
+      username &&
+      username.length >= 6 &&
       avaibleUsername &&
       email &&
       email.length > 8 &&
       email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) &&
-      newPassword &&
-      newPassword.length >= 8 &&
+      password &&
+      password.length >= 8 &&
       confirmnewPassword &&
       confirmnewPassword.length >= 8 &&
-      confirmnewPassword.length === newPassword.length &&
-      confirmnewPassword === newPassword
+      confirmnewPassword.length === password.length &&
+      confirmnewPassword === password
     ) {
-      console.log({
-        newUsername,
-        email,
-        newPassword,
-        confirmnewPassword,
-      });
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/newuser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+          email: email,
+          fullName: fullName,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          setUserToken(data.token);
+        })
+        .catch((err) => console.log(err));
     }
   };
 
@@ -67,9 +87,17 @@ const SingUp = () => {
           label="New username"
           name="newusername"
           placeholder="New username"
-          setValue={setNewUsername}
+          setValue={setUsername}
           type="text"
-          value={newUsername}
+          value={username}
+        />
+        <InputAuth
+          label="Your full name"
+          name="userfullname"
+          placeholder="Your full name"
+          setValue={setFullName}
+          type="text"
+          value={fullName}
         />
         <InputAuth
           label="Your E-mail"
@@ -83,9 +111,9 @@ const SingUp = () => {
           label="Your Password"
           name="newpassword"
           placeholder="Your password"
-          setValue={setNewPassword}
+          setValue={setPassword}
           type="password"
-          value={newPassword}
+          value={password}
         />
         <InputAuth
           label="Confirm your password"
