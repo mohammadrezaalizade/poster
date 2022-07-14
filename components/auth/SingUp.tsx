@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import FormLayout from "./layouts/FormLayout";
 import InputAuth from "./UI/InputAuth";
-import { userToken as userInfo } from "../../atoms/userToken";
-import { useRecoilState } from "recoil";
 import jwt from "jsonwebtoken";
+import { useStore } from "zustand";
+import { useAuthStore } from "../../store/global/authStore";
 
 const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
 
@@ -14,7 +14,7 @@ const SingUp = () => {
   const [password, setPassword] = useState("");
   const [confirmnewPassword, setConfirmnewPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [userToken, setUserToken] = useRecoilState(userInfo);
+  const user = useStore(useAuthStore);
 
   
   //check username is exists or not
@@ -71,7 +71,8 @@ const SingUp = () => {
         .then((res) => res.json())
         .then((data) => {
           console.log(data);
-          setUserToken(data.token);
+          user.singIn(data);
+
         })
         .catch((err) => console.log(err));
     }
