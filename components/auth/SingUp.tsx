@@ -110,7 +110,11 @@ const SingUp = () => {
     password: Yup.string()
       .min(6, "Password must be bigger than 6 words")
       .required("Password is required"),
-    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null],'Confirm password must be equal password')
+    confirmPassword: Yup.string()
+      .oneOf(
+        [Yup.ref("password"), null],
+        "Confirm password must be equal password"
+      )
       .min(6, "Confirm password must be bigger than 6 words")
       .required("Confirm password is required"),
   });
@@ -118,7 +122,26 @@ const SingUp = () => {
   const formik = useFormik({
     initialValues: initialFormData,
     onSubmit: (values: any) => {
-      console.log(values, null, 2);
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: values.username,
+          password: values.password,
+          email: values.email,
+          fullName: values.fullName,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          user.singIn(data);
+          console.log(data);
+        })
+        .catch((error) => {
+          console.log(error.message);
+        });
     },
     validationSchema: SignupSchema,
     validateOnChange: false,
