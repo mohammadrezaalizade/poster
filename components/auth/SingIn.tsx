@@ -58,7 +58,9 @@ const SingIn = () => {
         .then((res) => res.json())
         .then((data) => {
           user.singIn(data);
-          router.replace("/app");
+          console.log(data);
+
+          //router.replace("/app");
         });
     },
     validationSchema: SigninSchema,

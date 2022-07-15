@@ -12,8 +12,14 @@ router.post(async (req, res) => {
   try {
     const { username, password, keepmeSingIn } = req.body;
     await connectMongo();
+
+    const userExists = await User.exists({ username: username });
+    if (!userExists) throw new Error("Username is't correct");
+
     const user = await User.findOne({ username: username });
-    console.log(user);
+
+    if (password !== user.password) throw new Error("Password is't correct");
+
     const payload = {
       id: user._id,
       username: user.username,
@@ -21,6 +27,7 @@ router.post(async (req, res) => {
       fullName: user.fullName,
       createdAt: user.createdAt,
     };
+
     const createUserToken = jwt.sign(payload, KEY, { expiresIn: "7d" });
 
     if (password === user.password) {
@@ -29,7 +36,6 @@ router.post(async (req, res) => {
           "Set-Cookie",
           `token=${createUserToken}; path='/'; Max-Age=604800 ; httpOnly; secure; SameSite=Strict`
         );
-
         res.status(200).json({
           token: createUserToken,
           userInfo: payload,
@@ -38,8 +44,6 @@ router.post(async (req, res) => {
         res.setHeader("Set-Cookie", "token=someValue; Max-Age=0");
         res.status(200).json({ userInfo: payload, token: createUserToken });
       }
-    } else {
-      throw new Error("Your password or username is wrong");
     }
   } catch (error: any) {
     console.log(error);
