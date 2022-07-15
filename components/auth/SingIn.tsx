@@ -5,25 +5,53 @@ import FormLayout from "./layouts/FormLayout";
 import { useStore } from "zustand";
 import { useAuthStore } from "../../store/global/authStore";
 import { useRouter } from "next/router";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+
+export type FormValues = {
+  username: string;
+  password: string;
+};
+
+export type InputType = {
+  name: keyof FormValues;
+  label: string;
+  placeholder: string;
+  type: "text" | "number" | "password" | "email";
+};
+
+const initialFormData = {
+  username: "",
+  password: "",
+};
 
 const SingIn = () => {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [keepmeSingIn, setKeepmeSingIn] = useState<boolean>(false);
   const user = useStore(useAuthStore);
   const router = useRouter();
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    if (username && password) {
+  const SigninSchema = Yup.object().shape({
+    username: Yup.string()
+      .min(6, "Username must be more than 6 words")
+      .max(12, "Username must be less than 12 words")
+      .lowercase()
+      .required("Username is required"),
+    password: Yup.string()
+      .min(6, "Password must be bigger than 6 words")
+      .required("Password is required"),
+  });
+
+  const formik = useFormik({
+    initialValues: initialFormData,
+    onSubmit: (values: any) => {
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: username,
-          password: password,
+          username: values.username,
+          password: values.password,
           keepmeSingIn: keepmeSingIn,
         }),
       })
@@ -32,32 +60,53 @@ const SingIn = () => {
           user.singIn(data);
           router.replace("/app");
         });
-    } else {
-    }
-  };
+    },
+    validationSchema: SigninSchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+  });
 
   return (
     <FormLayout>
       <form
-        onSubmit={handleSubmit}
+        onSubmit={formik.handleSubmit}
         className="w-full flex flex-col gap-9 justify-center items-center"
       >
         <InputAuth
-          label="Username"
+          label="Enter your username"
+          placeholder="Enter your username"
           type="text"
-          placeholder="Your Username"
-          value={username as string}
-          setValue={setUsername}
           name="username"
+          onChange={formik.handleChange}
+          value={
+            formik.values["username"] === null ? "" : formik.values["username"]
+          }
+          onBlur={formik.handleBlur}
+          errorMessage={
+            formik.errors["username"] && formik.touched["username"]
+              ? formik.errors["username"]
+              : ""
+          }
         />
+
         <div className="flex w-full flex-col gap-2">
           <InputAuth
-            label="Password"
+            label="Enter your password"
+            placeholder="Enter your password"
             type="password"
             name="password"
-            placeholder="Your Password"
-            value={password as string}
-            setValue={setPassword}
+            onChange={formik.handleChange}
+            value={
+              formik.values["password"] === null
+                ? ""
+                : formik.values["password"]
+            }
+            onBlur={formik.handleBlur}
+            errorMessage={
+              formik.errors["password"] && formik.touched["password"]
+                ? formik.errors["password"]
+                : ""
+            }
           />
           <div className="flex gap-2 translate-x-5 ">
             <div className="form-check">

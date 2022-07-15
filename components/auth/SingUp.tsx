@@ -1,22 +1,75 @@
 import React, { useEffect, useState } from "react";
 import FormLayout from "./layouts/FormLayout";
 import InputAuth from "./UI/InputAuth";
-import jwt from "jsonwebtoken";
 import { useStore } from "zustand";
 import { useAuthStore } from "../../store/global/authStore";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
 const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
+export type FormValues = {
+  username: string;
+  fullname: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
+export type InputType = {
+  name: keyof FormValues;
+  label: string;
+  placeholder: string;
+  type: "text" | "number" | "password" | "email";
+};
+const formInputs: InputType[] = [
+  {
+    name: "username",
+    label: "Enter a new username",
+    placeholder: "Enter a new username",
+    type: "text",
+  },
+
+  {
+    name: "fullname",
+    label: "Enter your full name",
+    placeholder: "Enter your full name",
+    type: "text",
+  },
+  {
+    name: "email",
+    label: "Enter your E-mail",
+    placeholder: "Enter your E-mail",
+    type: "text",
+  },
+  {
+    name: "password",
+    label: "Enter your passowrd",
+    placeholder: "Enter your passowrd",
+    type: "password",
+  },
+  {
+    name: "confirmPassword",
+    label: "Confirm your password",
+    placeholder: "Confirm your password",
+    type: "password",
+  },
+];
+
+/* 
+========Initial form data
+*/
+const initialFormData = {
+  username: "",
+  fullname: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+};
 
 const SingUp = () => {
-  const [username, setUsername] = useState("");
-  const [avaibleUsername, setAvaibleUsername] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmnewPassword, setConfirmnewPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const user = useStore(useAuthStore);
+  const [username, setUsername] = useState<any>();
+  const [avaibleUsername, setAvaibleUsername] = useState<any>();
 
-  
   //check username is exists or not
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -28,7 +81,7 @@ const SingUp = () => {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ password }),
+          body: JSON.stringify({ username }),
         })
           .then((res) => res.json())
           .then((isAvaible) =>
@@ -40,90 +93,65 @@ const SingUp = () => {
     return clearTimeout(timeout);
   }, [username]);
 
-  const handlesubmit = (e: any) => {
-    e.preventDefault();
-    if (
-      username &&
-      username.length >= 6 &&
-      avaibleUsername &&
-      email &&
-      email.length > 8 &&
-      email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) &&
-      password &&
-      password.length >= 8 &&
-      confirmnewPassword &&
-      confirmnewPassword.length >= 8 &&
-      confirmnewPassword.length === password.length &&
-      confirmnewPassword === password
-    ) {
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/newuser`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-          email: email,
-          fullName: fullName,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          user.singIn(data);
+  const SignupSchema = Yup.object().shape({
+    username: Yup.string()
+      .min(6, "Username must be more than 6 words")
+      .max(12, "Username must be less than 12 words")
+      .lowercase()
+      .required("Username is required"),
+    fullname: Yup.string().required("Fullname is required"),
+    email: Yup.string()
+      .matches(
+        /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+        "Please Enter a valid E-mail"
+      )
+      .required("E-mail is required"),
 
-        })
-        .catch((err) => console.log(err));
-    }
-  };
+    password: Yup.string()
+      .min(6, "Password must be bigger than 6 words")
+      .required("Password is required"),
+    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null],'Confirm password must be equal password')
+      .min(6, "Confirm password must be bigger than 6 words")
+      .required("Confirm password is required"),
+  });
+
+  const formik = useFormik({
+    initialValues: initialFormData,
+    onSubmit: (values: any) => {
+      console.log(values, null, 2);
+    },
+    validationSchema: SignupSchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+  });
 
   return (
     <FormLayout>
       <form
-        onSubmit={handlesubmit}
+        onSubmit={formik.handleSubmit}
         className="w-full flex flex-col gap-9 justify-center items-center"
       >
-        <InputAuth
-          label="New username"
-          name="newusername"
-          placeholder="New username"
-          setValue={setUsername}
-          type="text"
-          value={username}
-        />
-        <InputAuth
-          label="Your full name"
-          name="userfullname"
-          placeholder="Your full name"
-          setValue={setFullName}
-          type="text"
-          value={fullName}
-        />
-        <InputAuth
-          label="Your E-mail"
-          name="email"
-          placeholder="Your E-mail"
-          setValue={setEmail}
-          type="text"
-          value={email}
-        />
-        <InputAuth
-          label="Your Password"
-          name="newpassword"
-          placeholder="Your password"
-          setValue={setPassword}
-          type="password"
-          value={password}
-        />
-        <InputAuth
-          label="Confirm your password"
-          name="confirmnewpassword"
-          placeholder="Confirm your password"
-          setValue={setConfirmnewPassword}
-          type="password"
-          value={confirmnewPassword}
-        />
+        {formInputs.map((input: InputType, index) => (
+          <InputAuth
+            key={index}
+            label={input.label}
+            placeholder={input.placeholder}
+            type={input.type}
+            name={input.name}
+            onChange={formik.handleChange}
+            value={
+              formik.values[input.name] === null
+                ? ""
+                : formik.values[input.name]
+            }
+            onBlur={formik.handleBlur}
+            errorMessage={
+              formik.errors[input.name] && formik.touched[input.name]
+                ? formik.errors[input.name]
+                : ""
+            }
+          />
+        ))}
         <button
           type="submit"
           className="bg-p_blue-500 hover:bg-p_blue-400 transition duration-200 w-full py-2 px-4 rounded-full text-p_white-100 "
