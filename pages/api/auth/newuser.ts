@@ -11,6 +11,9 @@ router.post(async (req, res) => {
   try {
     const { username, password, email, fullName } = req.body;
     await connectMongo();
+
+    const usernameStatus = await User.exists({ username: username });
+    if (usernameStatus) throw new Error("This username is not available");
     const newUser = await User.create({
       fullName,
       username,
@@ -18,7 +21,6 @@ router.post(async (req, res) => {
       password,
     });
     const findUser = await User.findById(newUser);
-    console.log(findUser);
     const payload = {
       email: findUser.email,
       fullName: findUser.fullName,
@@ -31,6 +33,7 @@ router.post(async (req, res) => {
       "Set-Cookie",
       `token=${createUserToken}; path='/'; Max-Age=604800 ; httpOnly; secure; SameSite=Strict`
     );
+    ``;
     res.statusCode = 201;
 
     res.json({
@@ -38,8 +41,7 @@ router.post(async (req, res) => {
       userCreated: true,
     });
   } catch (error) {
-    console.log(error);
-    res.json({ error });
+    res.json({ error: (error as Error).message });
   }
 });
 router.all((req, res) => {

@@ -122,7 +122,7 @@ const SingUp = () => {
   const formik = useFormik({
     initialValues: initialFormData,
     onSubmit: (values: any) => {
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/user`, {
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/newuser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
