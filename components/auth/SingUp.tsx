@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import { useAuthStore } from "../../store/global/authStore";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-
+import { tostify } from "../UI/notification/utils/tostify";
 const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
 export type FormValues = {
   username: string;
@@ -138,9 +138,12 @@ const SingUp = () => {
         .then((data) => {
           user.singIn(data);
           console.log(data);
+          if (data.error) {
+            tostify(`${data.error}`, "error");
+          }
         })
         .catch((error) => {
-          console.log(error.message);
+          tostify(`${error.error}`, "error");
         });
     },
     validationSchema: SignupSchema,

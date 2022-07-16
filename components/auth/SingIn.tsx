@@ -7,6 +7,7 @@ import { useAuthStore } from "../../store/global/authStore";
 import { useRouter } from "next/router";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { tostify } from "../UI/notification/utils/tostify";
 
 export type FormValues = {
   username: string;
@@ -58,9 +59,13 @@ const SingIn = () => {
         .then((res) => res.json())
         .then((data) => {
           user.singIn(data);
-          console.log(data);
-
+          if(data.error){
+            tostify(`${data.error}`,"error")
+          }
           //router.replace("/app");
+        }).catch(error=>{
+          console.log("THIS IS FROM BROWSER" , error.message);
+          
         });
     },
     validationSchema: SigninSchema,
