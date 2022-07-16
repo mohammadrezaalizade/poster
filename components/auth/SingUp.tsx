@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import FormLayout from "./layouts/FormLayout";
 import InputAuth from "./UI/InputAuth";
 import { useStore } from "zustand";
@@ -6,7 +6,8 @@ import { useAuthStore } from "../../store/global/authStore";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { tostify } from "../UI/notification/utils/tostify";
-const KEY = process.env.NEXT_PUBLIC_JWT_KEY as string;
+
+
 export type FormValues = {
   username: string;
   fullname: string;
@@ -67,31 +68,6 @@ const initialFormData = {
 
 const SingUp = () => {
   const user = useStore(useAuthStore);
-  const [username, setUsername] = useState<any>();
-  const [avaibleUsername, setAvaibleUsername] = useState<any>();
-
-  //check username is exists or not
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (username.length >= 4) {
-        //ERROR
-        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user.....`, {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username }),
-        })
-          .then((res) => res.json())
-          .then((isAvaible) =>
-            isAvaible ? setAvaibleUsername(true) : setAvaibleUsername(false)
-          );
-      }
-    }, 2000);
-
-    return clearTimeout(timeout);
-  }, [username]);
 
   const SignupSchema = Yup.object().shape({
     username: Yup.string()
